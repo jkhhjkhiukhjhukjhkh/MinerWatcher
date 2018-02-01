@@ -1,0 +1,5 @@
+.idea
+APP/config/config.toml
+composer.lock
+*.log
+vendor
