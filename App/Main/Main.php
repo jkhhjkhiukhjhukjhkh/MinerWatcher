@@ -121,13 +121,13 @@ class Main
 
     function mail($mailContent)
     {
-        $transport = (new Swift_SmtpTransport('smtp.163.com', 465,'ssl'))
+        $transport = (new Swift_SmtpTransport('smtp.163.com', 465, 'ssl'))
             ->setUsername($this->config['mail']['loginusername'])
             ->setPassword($this->config['mail']['loginpwd']);
 
         $mailer = new Swift_Mailer($transport);
 
-        $message = (new Swift_Message($this->config['mail']['theme']))
+        $message = (new Swift_Message($this->config['mail']['theme'] . '-' . date('Y-m-d H:i:s')))
             ->setFrom([$this->config['mail']['loginusername'] => $this->config['mail']['fromnickname']])
             ->setTo([$this->config['mail']['toaddress']], $this->config['mail']['tousername'])
             ->setBody($mailContent, $this->config['mail']['mailtype']);
@@ -294,7 +294,8 @@ TP;
         $pricedom = $dom1->find('.price-dl', 0);
         $ratedom = $dom1->children(1);
 
-        $rate = $ratedom->find('.red', 0)->innertext();
+        $rate = $ratedom->children(0)->innertext();
+        $rate = strip_tags($rate);
 
         $dollars = $pricedom->find('#currPrice', 0)->innertext();
         $ync = $pricedom->find('#currFiat', 0)->innertext();
