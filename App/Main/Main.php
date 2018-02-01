@@ -121,12 +121,11 @@ class Main
 
     function mail($mailContent)
     {
-        $transport = (new Swift_SmtpTransport('smtp.163.com', 25))
+        $transport = (new Swift_SmtpTransport('smtp.163.com', 465,'ssl'))
             ->setUsername($this->config['mail']['loginusername'])
             ->setPassword($this->config['mail']['loginpwd']);
 
         $mailer = new Swift_Mailer($transport);
-
 
         $message = (new Swift_Message($this->config['mail']['theme']))
             ->setFrom([$this->config['mail']['loginusername'] => $this->config['mail']['fromnickname']])
