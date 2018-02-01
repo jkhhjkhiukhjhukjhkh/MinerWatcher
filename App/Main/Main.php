@@ -4,7 +4,6 @@
  * Created by PhpStorm.
  * User: william
  * Mail：tzh.wu.qq.com
-
  */
 
 namespace App\Main;
@@ -42,13 +41,13 @@ class Main
         $this->client1 = new Client(
             [
                 'base_uri' => $this->config['url']['baseurl'],
-                'timeout' => 10.0,
+                'timeout' => $this->config['requestimeout'],
                 'verify' => false,
             ]
         );
         $this->client2 = new Client(
             [
-                'timeout' => 10.0,
+                'timeout' => $this->config['requestimeout'],
                 'verify' => false,
             ]
         );
@@ -70,11 +69,11 @@ class Main
                 $item['token'] = $token = $this->login($item['phone'], $item['password']);
             }
 
-            usleep(1000);
+            usleep($this->config['requestgap']);
 
             $codes = $this->getMinerStatus($item['phone'], $item['token']);
 
-            usleep(1000);
+            usleep($this->config['requestgap']);
 
             $tp['codes'] = $codes;
 

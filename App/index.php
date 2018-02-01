@@ -24,9 +24,9 @@ $index = new Main();
 try {
     $index->main();
 } catch (LoginErrException $exception) {
-    $this->mail($this->messageBuilder(Main::TYPE_LOGIN_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
+    $this->mail($index->messageBuilder(Main::TYPE_LOGIN_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
 } catch (LowLevelException $exception) {
-    $this->mail($this->messageBuilder(Main::TYPE_LLVL_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
+    $this->mail($index->messageBuilder(Main::TYPE_LLVL_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
 } catch (\Exception $exception) {
-    $this->mail($this->messageBuilder(Main::TYPE_LLVL_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
+    $this->mail($index->messageBuilder(Main::TYPE_LLVL_ERR, date('Y-m-d H:i:s'), $exception->getMessage()));
 }
