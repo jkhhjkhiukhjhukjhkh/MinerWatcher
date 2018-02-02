@@ -23,6 +23,10 @@ class Main
     const TYPE_NOR = 0;
     const TYPE_LOGIN_ERR = 1;
     const TYPE_LLVL_ERR = 2;
+    /**
+     * 行情事件
+     */
+    const TYPE_QUOTE_EVENT = 3;
 
     public $configFile;
     public $config;
@@ -108,6 +112,9 @@ class Main
                 break;
             case self::TYPE_LLVL_ERR:
                 $message = sprintf($this->config['mail']['tp3'], ...$args);
+                break;
+            case self::TYPE_QUOTE_EVENT:
+                $message = sprintf($this->config['mail']['tp4'], ...$args);
                 break;
         }
 
