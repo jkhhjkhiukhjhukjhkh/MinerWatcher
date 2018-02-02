@@ -200,10 +200,12 @@ class Main
         $content = json_decode($content, true);
 
         if ($content['code'] == 0) {
-            $last = array_pop($content['data']['history']);
+            if (!empty($content['data']['history'])) {
+                $last = array_pop($content['data']['history']);
+            }
             return array(
                 $content['data']['totalincom'],
-                $last['income']
+                isset($last) ? $last['income'] : 0,
             );
         }
 
