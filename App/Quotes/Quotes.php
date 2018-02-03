@@ -14,9 +14,14 @@ use App\Main\Main;
 
 class Quotes
 {
+    /**
+     * @var Main
+     */
+    public $index;
 
-    public function __construct()
+    public function __construct($index)
     {
+        $this->index = $index;
     }
 
 
@@ -28,7 +33,7 @@ class Quotes
 
         $rate = abs($price[3]);
 
-        if ($rate > 1) {
+        if ($rate > $this->index->config['mail']['watcherRate']) {
             $main->mail($main->messageBuilder(Main::TYPE_QUOTE_EVENT, ...$price));
         }
     }

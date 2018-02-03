@@ -16,9 +16,7 @@ ini_set('max_execution_time', 0);
 ini_set('memory_limit', '1G');
 ini_set('date.timezone', 'PRC');
 
-
-$quotes = new \App\Quotes\Quotes();
-$index = new \App\Main\Main();
+$quotes = new \App\Quotes\Quotes($index = new \App\Main\Main());
 
 try {
     $quotes->main();

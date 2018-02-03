@@ -17,6 +17,7 @@ use Swift_Mailer;
 use Swift_Message;
 use Swift_SmtpTransport;
 use Yosymfony\Toml\Toml;
+use Yosymfony\Toml\TomlBuilder;
 
 class Main
 {
@@ -31,6 +32,8 @@ class Main
     public $configFile;
     public $config;
 
+    public $income;
+
     public $status = [];
     public $revenge = [];
     public $coinPrice = [];
@@ -42,6 +45,7 @@ class Main
     {
         $this->configFile = __DIR__ . '/../Config/config.toml';
         $this->config = Toml::parse($this->configFile);
+
         $this->client1 = new Client(
             [
                 'base_uri' => $this->config['url']['baseurl'],
@@ -61,6 +65,7 @@ class Main
     {
         unset($this->client1);
         unset($this->client2);
+
     }
 
 
@@ -70,7 +75,7 @@ class Main
             $tp = array();
 
             if (empty($item['token'])) {
-                $item['token'] = $token = $this->login($item['phone'], $item['password']);
+                $tp['token'] = $item['token'] = $token = $this->login($item['phone'], $item['password']);
             }
 
             usleep($this->config['requestgap']);
@@ -80,8 +85,14 @@ class Main
             usleep($this->config['requestgap']);
 
             $tp['codes'] = $codes;
+            $this->income[$item['phone']]['codes'] = $codes;
+            //mark
+            $this->income[$item['phone']]['mark'] = $item['mark'];
 
             list($tp['income'], $tp['incomeyes']) = $this->getIncome($item['phone'], $item['token']);
+            $this->income[$item['phone']]['incomeyes'] = $tp['incomeyes'];
+            $this->income[$item['phone']]['totalincom'] = $tp['income'];
+            $this->income[$item['phone']]['mark'] = $item['mark'];
 
             $this->status[$item['phone']] = $tp;
         }
@@ -92,6 +103,8 @@ class Main
 
         $this->mail($this->messageBuilder(self::TYPE_NOR));
 
+        file_put_contents('a.log', \GuzzleHttp\json_encode($this->config));
+
 
     }
 
@@ -100,7 +113,26 @@ class Main
         $message = '';
         switch ($type) {
             case self::TYPE_NOR:
-                $result = $this->revenge;
+                $result[] = $this->revenge[0];
+                $result[] = $this->revenge[1];
+                $result[] = $this->revenge[2];
+                $result[] = $this->revenge[3];
+                $result[] = $this->revenge[4];
+                $result[] = $this->revenge[5];
+                $result[] = $this->revenge[6];
+                $machinePlain = '';
+                foreach ($this->income as $key => $income) {
+                    $machinePlain .= sprintf($this->config['mail']['tp5'], ...[
+                        $key,
+                        is_array($income['codes']) ? implode(',', array_map(function ($value) {
+                            return $value['code'] . '|' . $value['onlineStatus'];
+                        }, $income['codes'])) : implode('|', array_shift($income['codes'])),
+                        $income['totalincom'],
+                        $income['incomeyes'],
+                        $income['mark'],
+                    ]);
+                }
+                $result[] = $machinePlain;
                 $result[] = $this->coinPrice[0];
                 $result[] = $this->coinPrice[1];
                 $result[] = $this->coinPrice[2];
@@ -124,6 +156,11 @@ class Main
 
         return $message;
 
+    }
+
+    public function buildSubMessage(...$args)
+    {
+        return sprintf($this->config['mail']['tp5'], $args);
     }
 
     function mail($mailContent)
@@ -200,6 +237,8 @@ class Main
         $content = json_decode($content, true);
 
         if ($content['code'] == 0) {
+            //store history
+            $this->income[$phone]['history'] = $content['data']['history'];
             if (!empty($content['data']['history'])) {
                 $last = array_pop($content['data']['history']);
             }
@@ -214,7 +253,6 @@ class Main
 
     function login($phone, $pwd)
     {
-
         $result = $this->client1->post($this->config['url']['login'], [
             'headers' => $this->getHeader(),
             'form_params' => [
@@ -224,7 +262,6 @@ class Main
             ]
         ]);
         $content = $result->getBody()->getContents();
-
 
         $content = json_decode($content, true);
 
@@ -252,7 +289,6 @@ class Main
         unset($response);
 
         $content = json_decode($content, true);
-
 
         if (empty($content['Err'])) {
             return $content['data']['CodeList'];
