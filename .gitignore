@@ -4,3 +4,4 @@ APP/config/config*
 composer.lock
 *.log
 vendor
+/test

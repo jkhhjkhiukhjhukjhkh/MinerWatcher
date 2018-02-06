@@ -121,8 +121,10 @@ class Main
                 $result[] = $this->revenge[5];
                 $result[] = $this->revenge[6];
                 $machinePlain = '';
+                $start = 0;
                 foreach ($this->income as $key => $income) {
                     $machinePlain .= sprintf($this->config['mail']['tp5'], ...[
+                        $start++,
                         $key,
                         is_array($income['codes']) ? implode(',', array_map(function ($value) {
                             return $value['code'] . '|' . $value['onlineStatus'];
