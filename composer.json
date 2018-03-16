@@ -10,11 +10,14 @@
     "yosymfony/toml": "^0.3.3",
     "guzzlehttp/guzzle": "^6.3",
     "swiftmailer/swiftmailer": "^6.0",
-    "sunra/php-simple-html-dom-parser": "^1.5"
+    "sunra/php-simple-html-dom-parser": "^1.5",
+    "catfan/medoo": "^1.5",
+    "monolog/monolog": "^1.23"
   },
   "autoload": {
     "psr-4": {
       "App\\": "App/"
-    }
+    },
+    "classmap": ["GoogleAuthenticator/"]
   }
 }

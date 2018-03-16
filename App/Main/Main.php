@@ -9,6 +9,7 @@
 namespace App\Main;
 
 
+use App\DB\DB;
 use App\Exception\LoginErrException;
 use App\Exception\LowLevelException;
 use GuzzleHttp\Client;
@@ -68,6 +69,25 @@ class Main
 
     }
 
+    public function test()
+    {
+        $phones = array();
+        foreach ($this->config['phone'] as $phone) {
+            $phones[] = $phone['phone'];
+        }
+        var_dump($phones);
+        $results = DB::getDB()->select('', 'phone', array(
+            'have' => 1
+        ));
+        foreach ($results as $result) {
+            if (!in_array($result, $phones)) {
+                var_dump($result);
+            }
+        }
+        var_dump(array_diff($phones, $results));
+        exit;
+    }
+
 
     public function main()
     {
@@ -89,10 +109,16 @@ class Main
             //mark
             $this->income[$item['phone']]['mark'] = $item['mark'];
 
+            //获取余额、提现中
+            $this->getPocket($item['phone'], $item['token']);
+
             list($tp['income'], $tp['incomeyes']) = $this->getIncome($item['phone'], $item['token']);
             $this->income[$item['phone']]['incomeyes'] = $tp['incomeyes'];
             $this->income[$item['phone']]['totalincom'] = $tp['income'];
             $this->income[$item['phone']]['mark'] = $item['mark'];
+
+            $tp['balance'] = $this->income[$item['phone']]['balance'];
+            $tp['withdraw'] = $this->income[$item['phone']]['withdraw'];
 
             $this->status[$item['phone']] = $tp;
         }
@@ -103,7 +129,7 @@ class Main
 
         $this->mail($this->messageBuilder(self::TYPE_NOR));
 
-        file_put_contents('a.log', \GuzzleHttp\json_encode($this->config));
+//        file_put_contents('a.log', \GuzzleHttp\json_encode($this->config));
 
 
     }
@@ -120,6 +146,8 @@ class Main
                 $result[] = $this->revenge[4];
                 $result[] = $this->revenge[5];
                 $result[] = $this->revenge[6];
+                $result[] = $this->revenge[7];
+                $result[] = $this->revenge[8];
                 $machinePlain = '';
                 $start = 0;
                 foreach ($this->income as $key => $income) {
@@ -129,6 +157,8 @@ class Main
                         is_array($income['codes']) ? implode(',', array_map(function ($value) {
                             return $value['code'] . '|' . $value['onlineStatus'];
                         }, $income['codes'])) : implode('|', array_shift($income['codes'])),
+                        floatval($income['balance']),
+                        floatval($income['withdraw']),
                         $income['totalincom'],
                         $income['incomeyes'],
                         $income['mark'],
@@ -139,6 +169,7 @@ class Main
                 $result[] = $this->coinPrice[1];
                 $result[] = $this->coinPrice[2];
                 $result[] = $this->coinPrice[1] * $this->revenge[5];
+                $result[] = $this->coinPrice[1] * $this->revenge[7];
                 $message = sprintf($this->config['mail']['tp1'], ...$result);
                 break;
             case self::TYPE_LOGIN_ERR:
@@ -195,6 +226,8 @@ class Main
         $totalIncome = 0;
         $totalIncomeYes = 0;
         $totalAccount = 0;
+        $totalBalance = 0;
+        $totalWithdraw = 0;
         foreach ($this->status as $state) {
             $totalAccount++;
             foreach ($state['codes'] as $code) {
@@ -209,6 +242,10 @@ class Main
             $totalIncome += $state['income'];
 
             $totalIncomeYes += $state['incomeyes'];
+
+            $totalBalance += $state['balance'];
+
+            $totalWithdraw += $state['withdraw'];
         }
 
         return [
@@ -219,6 +256,8 @@ class Main
             $totalMinerOffline,
             $totalIncome,
             $totalIncomeYes,
+            $totalBalance,
+            $totalWithdraw
         ];
     }
 
@@ -238,19 +277,57 @@ class Main
 
         $content = json_decode($content, true);
 
+//        if ($phone == '18016384523') {
+//            file_put_contents('a.php', '<?php ' . var_export($content, true) . ';');
+//            exit;
+//        }
+
         if ($content['code'] == 0) {
             //store history
             $this->income[$phone]['history'] = $content['data']['history'];
-            if (!empty($content['data']['history'])) {
-                $last = array_pop($content['data']['history']);
+//            if (!empty($content['data']['history'])) {
+//                $last = array_pop($content['data']['history']);
+//            }
+            if (!empty($content['data']['yestodayincom'])) {
+                $last = $content['data']['yestodayincom'];
             }
             return array(
                 $content['data']['totalincom'],
-                isset($last) ? $last['income'] : 0,
+                isset($last) ? $last : 0,
             );
         }
 
         throw new LowLevelException('获取收入信息失败' . json_encode($content));
+    }
+
+    public function getPocket($phone, $token)
+    {
+        $response = $this->client1->post($this->config['url']['pocket'], [
+            'headers' => $this->getHeader(),
+            'form_params' => [
+                'phoneNumber' => $phone,
+                'token' => $token,
+            ]
+        ]);
+
+        $content = $response->getBody()->getContents();
+        unset($response);
+
+        $content = json_decode($content, true);
+
+//        if ($phone == '15656271685') {
+//            file_put_contents('a.php', '<?php ' . var_export($content, true) . ';');
+//            exit;
+//        }
+
+        if ($content['code'] == 0) {
+            //store history
+            $this->income[$phone]['balance'] = $content['data']['Blance'];
+            $this->income[$phone]['withdraw'] = $content['data']['takeOutReady'];
+            return;
+        }
+
+        throw new LowLevelException('获取钱包信息失败' . json_encode($content));
     }
 
     function login($phone, $pwd)
