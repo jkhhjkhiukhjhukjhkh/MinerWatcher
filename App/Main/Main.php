@@ -267,8 +267,8 @@ class Main
         $response = $this->client1->post($this->config['url']['income'], [
             'headers' => $this->getHeader(),
             'form_params' => [
-                'phoneNumber' => $phone,
-                'token' => $token,
+//                'phoneNumber' => $phone,
+                'uid' => $token,
             ]
         ]);
 
@@ -277,22 +277,17 @@ class Main
 
         $content = json_decode($content, true);
 
-//        if ($phone == '18016384523') {
-//            file_put_contents('a.php', '<?php ' . var_export($content, true) . ';');
-//            exit;
-//        }
-
-        if ($content['code'] == 0) {
+        if (!$content['Err']) {
             //store history
-            $this->income[$phone]['history'] = $content['data']['history'];
+//            $this->income[$phone]['history'] = $content['data']['history'];
 //            if (!empty($content['data']['history'])) {
 //                $last = array_pop($content['data']['history']);
 //            }
-            if (!empty($content['data']['yestodayincom'])) {
-                $last = $content['data']['yestodayincom'];
+            if (!empty($content['data']['YesterdayIncome'])) {
+                $last = $content['data']['YesterdayIncome'];
             }
             return array(
-                $content['data']['totalincom'],
+                $content['data']['Balance'],
                 isset($last) ? $last : 0,
             );
         }
@@ -305,8 +300,8 @@ class Main
         $response = $this->client1->post($this->config['url']['pocket'], [
             'headers' => $this->getHeader(),
             'form_params' => [
-                'phoneNumber' => $phone,
-                'token' => $token,
+//                'phoneNumber' => $phone,
+                'uid' => $token,
             ]
         ]);
 
@@ -315,15 +310,10 @@ class Main
 
         $content = json_decode($content, true);
 
-//        if ($phone == '15656271685') {
-//            file_put_contents('a.php', '<?php ' . var_export($content, true) . ';');
-//            exit;
-//        }
-
-        if ($content['code'] == 0) {
+        if (!$content['Err']) {
             //store history
-            $this->income[$phone]['balance'] = $content['data']['Blance'];
-            $this->income[$phone]['withdraw'] = $content['data']['takeOutReady'];
+            $this->income[$phone]['balance'] = $content['data']['Balance'];
+            $this->income[$phone]['withdraw'] = $content['data']['ProcessingAmount'];
             return;
         }
 
@@ -337,7 +327,7 @@ class Main
             'form_params' => [
                 'phoneNumber' => $phone,
                 'password' => md5($pwd),
-                'areacode' => $this->config['areacode'],
+                'areaCode' => $this->config['areacode'],
             ]
         ]);
         $content = $result->getBody()->getContents();
@@ -345,8 +335,8 @@ class Main
         $content = json_decode($content, true);
 
         unset($result);
-        if ($content['code'] == 0) {
-            return $content['data']['token'];
+        if (!$content['Err']) {
+            return $content['data']['UID'];
         } else {
             throw new LoginErrException(json_encode($content));
         }
@@ -359,8 +349,8 @@ class Main
             'headers' => $this->getHeader(),
             'form_params' => [
                 'phoneNumber' => $phone,
-                'token' => $token,
-                'areacode' => 86,
+//                'token' => $token,
+                'areaCode' => 86,
             ]
         ]);
 
